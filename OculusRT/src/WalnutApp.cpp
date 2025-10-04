@@ -4,6 +4,7 @@
 #include "Walnut/Image.h" 
 #include "Walnut/Random.h"
 #include "Walnut/Timer.h"
+#include "Renderer.h"
 
 using namespace Walnut;
 
@@ -25,8 +26,9 @@ public:
 		m_ViewportWidth = ImGui::GetContentRegionAvail().x;
 		m_ViewportHeight = ImGui::GetContentRegionAvail().y;
 		// Render Image if Available
-		if (m_Image)
-			ImGui::Image(m_Image->GetDescriptorSet(), { (float)m_Image->GetWidth(), (float)m_Image->GetHeight() });
+		auto image = m_Renderer.GetFinalImage();
+		if (image)
+			ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() });
 		ImGui::End();
 		ImGui::PopStyleVar();
 
@@ -35,26 +37,14 @@ public:
 	void Render() {
 
 		Timer timer;
-		// If there is no image or viewport height and width have changed then only create a new Image and new Image Buffer acc to the new viewport, also delete the old image buffer
-		if (!m_Image || m_ViewportWidth != m_Image->GetWidth() || m_ViewportHeight != m_Image->GetHeight()) {
-			m_Image = std::make_shared<Walnut::Image>(m_ViewportWidth, m_ViewportHeight, ImageFormat::RGBA);
-			delete[] m_ImageData;
-			m_ImageData = new uint32_t[m_ViewportHeight * m_ViewportWidth];
-		}
-
-		// Set Random pixel value ABGR - (8 bits each for RGBA - uint32)
-		for (uint32_t i = 0; i < m_ViewportHeight * m_ViewportWidth; i++) {
-			m_ImageData[i] = Random::UInt();
-			// To make the A value 100%
-			m_ImageData[i] |= 0xff000000;
-		}
-
-		// Link image data to m_Image
-		m_Image->SetData(m_ImageData);
+		// Now we have shifted to new Renderer
+		m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
+		m_Renderer.Render();
 
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
 private:
+	Renderer m_Renderer;
 	std::shared_ptr<Walnut::Image> m_Image;
 	uint32_t* m_ImageData = nullptr;
 	uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
@@ -64,7 +54,7 @@ private:
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 {
 	Walnut::ApplicationSpecification spec;
-	spec.Name = "Sidd Ray Tracer";
+	spec.Name = "OculusRT";
 
 	Walnut::Application* app = new Walnut::Application(spec);
 	app->PushLayer<ExampleLayer>();
