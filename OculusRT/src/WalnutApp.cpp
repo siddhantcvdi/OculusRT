@@ -28,9 +28,11 @@ public:
 		// Render Image if Available
 		auto image = m_Renderer.GetFinalImage();
 		if (image)
-			ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() });
+			ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0,1), ImVec2(1,0));
 		ImGui::End();
 		ImGui::PopStyleVar();
+
+		Render();
 
 	}
 
@@ -45,8 +47,6 @@ public:
 	}
 private:
 	Renderer m_Renderer;
-	std::shared_ptr<Walnut::Image> m_Image;
-	uint32_t* m_ImageData = nullptr;
 	uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 	float m_LastRenderTime = 0.0f;
 };
